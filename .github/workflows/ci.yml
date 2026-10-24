@@ -1,0 +1,23 @@
+name: Evaluación en Docker
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener el código
+        uses: actions/checkout@v7
+
+      - name: Construir imagen
+        run: docker build -t mtah-evaluation:ci .
+
+      - name: Ejecutar evaluación
+        run: docker run --rm mtah-evaluation:ci
