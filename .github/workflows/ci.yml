@@ -21,3 +21,41 @@ jobs:
 
       - name: Ejecutar evaluación
         run: docker run --rm mtah-evaluation:ci
+
+  terraform_validate:
+    name: Validar Terraform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener el código
+        uses: actions/checkout@v7
+
+      - name: Configurar Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+          terraform_wrapper: false
+
+      - name: Comprobar formato
+        run: terraform fmt -check -recursive
+        working-directory: infra/terraform/evaluation-artifacts
+
+      - name: Inicializar sin backend
+        run: terraform init -backend=false -lockfile=readonly
+        working-directory: infra/terraform/evaluation-artifacts
+
+      - name: Validar configuración
+        run: terraform validate
+        working-directory: infra/terraform/evaluation-artifacts
+
+  kubernetes_validate:
+    name: Validar manifiestos Kubernetes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener el código
+        uses: actions/checkout@v7
+
+      - name: Validar esquemas Kubernetes
+        uses: docker://ghcr.io/yannh/kubeconform:v0.8.0
+        with:
+          entrypoint: /kubeconform
+          args: -strict -summary -kubernetes-version 1.31.4 infra/k8s
