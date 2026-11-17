@@ -209,7 +209,12 @@ if __name__ == '__main__':
     parser.add_argument("--window", type=int, nargs="+",
                         help="half-widths to write instead of the four published variants")
     parser.add_argument("--out", default=RESULTS_DIR, help="where to write")
+    parser.add_argument("--output",
+                        help="write one submission directly to this file (requires one --window)")
     args = parser.parse_args()
+
+    if args.output and (not args.window or len(args.window) != 1):
+        parser.error("--output requires exactly one --window value")
 
     codes = build()
     variants = ([("baseline_smooth{}".format(w) if w else "baseline_raw", w)
@@ -217,7 +222,8 @@ if __name__ == '__main__':
 
     for name, window in variants:
         labels = smooth(codes, window)
-        path = write_submission(os.path.join(args.out, "{}.csv".format(name)), labels)
+        path = args.output or os.path.join(args.out, "{}.csv".format(name))
+        path = write_submission(path, labels)
         counts = {label: int(np.sum(labels == label)) for label in LABELS}
         print("{:<20} window +/-{:<4} H {:>6}  A {:>6}  D {:>6}".format(
             name, window, counts["H"], counts["A"], counts["D"]))
